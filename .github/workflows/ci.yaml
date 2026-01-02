@@ -1,4 +1,4 @@
-name: FastAPI CI Pipeline
+name: FastAPI CI Pipeline Started
 
 on:
   push:
