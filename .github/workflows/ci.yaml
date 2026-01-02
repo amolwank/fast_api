@@ -26,6 +26,21 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t fastapi-demo .
+      # ------------------------------------
+      # Trivy securityScan
+      # ------------------------------------
+      - name: Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@master
+
+        with: 
+          image-ref: fastapi-demo:latest
+          formate: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+      
+      # ------------------------------------
+      # Push only if scan passed
+      # ------------------------------------
 
       - name: Tag Image
         run: |
