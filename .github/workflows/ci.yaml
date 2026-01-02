@@ -1,22 +1,38 @@
-name: FastAPI CI pipeline
+name: FastAPI CI Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
-        uses: actions/checkout@4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Buiild Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t fastapi-demo .
 
       - name: Tag Image
+        run: |
+          docker tag fastapi-demo:latest \
+          $(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPO }} \
+          --query 'repositories[0].repositoryUri' --output text):latest
 
-      - name: Push to ECR      
+      - name: Push to ECR
+        run: |
+          docker push $(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPO }} \
+          --query 'repositories[0].repositoryUri' --output text):latest
