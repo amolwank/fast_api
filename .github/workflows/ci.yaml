@@ -1,0 +1,22 @@
+name: FastAPI CI pipeline
+
+on:
+  push:
+    branches: ["main"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@4
+
+      - name: Configure AWS
+
+      - name: Login to Amazon ECR
+
+      - name: Buiild Docker Image
+
+      - name: Tag Image
+
+      - name: Push to ECR      
