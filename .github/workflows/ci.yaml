@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV  
 
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -25,16 +28,17 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t fastapi-demo .
+          docker build -t fastapi-demo:${IMAGE_TAG} .
       # ------------------------------------
       # Trivy securityScan
       # ------------------------------------
+      
       - name: Scan Docker Image with Trivy
         uses: aquasecurity/trivy-action@master
 
         with: 
-          image-ref: fastapi-demo:latest
-          formate: table
+          image-ref: fastapi-demo:${{env.IMAGE_TAG}}
+          format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
       
@@ -42,16 +46,14 @@ jobs:
       # Push only if scan passed
       # ------------------------------------
 
-      - name: Tag Image
+      - name: Push Image to ECR
         run: |
-          docker tag fastapi-demo:latest \
-          $(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPO }} \
-          --query 'repositories[0].repositoryUri' --output text):latest
-
-      - name: Push to ECR
-        run: |
-          docker push $(aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPO }} \
-          --query 'repositories[0].repositoryUri' --output text):latest
+          ECR_URI=$(aws ecr describe-repositories \
+            --repository-names ${{secrets.ECR_REPO}} \
+            --query 'repositories[0].repositoryUri' \
+            --output text) 
+          docker tag fastapi-demo:${IMAGE_TAG} $ECR_URI:${IMAGE_TAG}
+          docker push $ECR_URI:${IMAGE_TAG}
 
       - name: Test AWS auth
         run: aws sts get-caller-identity    
