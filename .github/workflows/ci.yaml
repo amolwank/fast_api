@@ -53,28 +53,33 @@ jobs:
           docker tag fastapi-demo:${IMAGE_TAG} $ECR_URI:${IMAGE_TAG}
           docker push $ECR_URI:${IMAGE_TAG}
       # -------------------------
-      # Update GitOps Repo
+      # Update GitOps Repo (Optimized)
       # -------------------------
-      - name: Update GitOps Repo with new image tag
+      - name: Checkout GitOps Repo
+        uses: actions/checkout@v4
+        with:
+          repository: amolwank/fastapi-gitops
+          token: ${{ secrets.GITOPS_TOKEN }} # Recommended: Use a Personal Access Token or Deploy Key
+          path: gitops-repo
+
+      - name: Update Image Tag
         run: |
-          mkdir -p ~/.ssh
-
-          echo "${{ secrets.GITOPS_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-
+          cd gitops-repo
+          # Use the env context to ensure the tag is captured correctly
+          sed -i "s/tag:.*/tag: \"${{ env.IMAGE_TAG }}\"/" helm/fastapi/values.yaml
+          
           git config --global user.email "ci@github.com"
           git config --global user.name "github-actions"
-
-          git clone git@github.com:amolwank/fastapi-gitops.git
-          cd fastapi-gitops
-
-          sed -i "s/tag:.*/tag: \"${IMAGE_TAG}\"/" helm/fastapi/values.yaml
-
+          
           git add helm/fastapi/values.yaml
-          git commit -m "Deploy FastAPI ${IMAGE_TAG}"
-          git push origin main
+          
+          # Only commit and push if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to image tag. Skipping push."
+          else
+            git commit -m "Deploy FastAPI ${{ env.IMAGE_TAG }}"
+            git push origin main
+          fi
 
       - name: Test AWS auth
         run: aws sts get-caller-identity    
