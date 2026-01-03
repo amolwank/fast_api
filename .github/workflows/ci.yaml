@@ -32,7 +32,6 @@ jobs:
       # ------------------------------------
       # Trivy securityScan
       # ------------------------------------
-      
       - name: Scan Docker Image with Trivy
         uses: aquasecurity/trivy-action@master
 
@@ -45,7 +44,6 @@ jobs:
       # ------------------------------------
       # Push only if scan passed
       # ------------------------------------
-
       - name: Push Image to ECR
         run: |
           ECR_URI=$(aws ecr describe-repositories \
@@ -54,6 +52,21 @@ jobs:
             --output text) 
           docker tag fastapi-demo:${IMAGE_TAG} $ECR_URI:${IMAGE_TAG}
           docker push $ECR_URI:${IMAGE_TAG}
+      # -------------------------
+      # Update GitOps Repo
+      # -------------------------
+      - name: Update GitOps Repo with new image tag
+        run: |
+          git config --global user.email "ci@github.com"
+          git config --global user.name "github-actions"
 
+          git clone https://${{ secrets.GITOPS_TOKEN }}@github.com/amolwank/fastapi-gitops.git
+          cd fastapi-gitops
+
+          sed -i "s/tag:.*/tag: \"${IMAGE_TAG}\"/" helm/fastapi/values.yaml
+
+          git add helm/fastapi/values.yaml
+          git commit -m "Deploy FastAPI ${IMAGE_TAG}"
+          git push
       - name: Test AWS auth
         run: aws sts get-caller-identity    
