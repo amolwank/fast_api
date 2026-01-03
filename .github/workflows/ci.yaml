@@ -62,17 +62,18 @@ jobs:
           git config --global user.email "ci@github.com"
           git config --global user.name "github-actions"
 
-          # Tell git to use token for github.com
-          git config --global url."https://${GITOPS_TOKEN}@github.com/".insteadOf "https://github.com/"
-
           git clone https://github.com/amolwank/fastapi-gitops.git
           cd fastapi-gitops
+
+          # 🔐 Inject PAT directly into Git auth
+          git config http.https://github.com/.extraheader "AUTHORIZATION: basic $(echo -n x-access-token:${GITOPS_TOKEN} | base64)"
 
           sed -i "s/tag:.*/tag: \"${IMAGE_TAG}\"/" helm/fastapi/values.yaml
 
           git add helm/fastapi/values.yaml
           git commit -m "Deploy FastAPI ${IMAGE_TAG}"
           git push origin main
+
 
 
       - name: Test AWS auth
