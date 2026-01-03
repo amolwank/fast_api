@@ -58,8 +58,10 @@ jobs:
       - name: Update GitOps Repo with new image tag
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.GITOPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+
+          echo "${{ secrets.GITOPS_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
           git config --global user.email "ci@github.com"
@@ -73,7 +75,6 @@ jobs:
           git add helm/fastapi/values.yaml
           git commit -m "Deploy FastAPI ${IMAGE_TAG}"
           git push origin main
-
 
       - name: Test AWS auth
         run: aws sts get-caller-identity    
