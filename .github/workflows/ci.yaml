@@ -131,6 +131,7 @@ jobs:
           git commit -m "Deploy FastAPI ${IMAGE_TAG}"
           git push origin main
 
+
       - name: Test AWS auth
         run: aws sts get-caller-identity    
 
