@@ -63,10 +63,13 @@ jobs:
           git clone https://${{ secrets.GITOPS_TOKEN }}@github.com/amolwank/fastapi-gitops.git
           cd fastapi-gitops
 
+          # 🔐 Force git to always use token for push
+          git remote set-url origin https://${{ secrets.GITOPS_TOKEN }}@github.com/amolwank/fastapi-gitops.git
+
           sed -i "s/tag:.*/tag: \"${IMAGE_TAG}\"/" helm/fastapi/values.yaml
 
           git add helm/fastapi/values.yaml
           git commit -m "Deploy FastAPI ${IMAGE_TAG}"
-          git push
+          git push origin main
       - name: Test AWS auth
         run: aws sts get-caller-identity    
