@@ -53,29 +53,31 @@ jobs:
           docker tag fastapi-demo:${IMAGE_TAG} $ECR_URI:${IMAGE_TAG}
           docker push $ECR_URI:${IMAGE_TAG}
       # -------------------------
-      # Update GitOps Repo (Optimized)
+      # Update GitOps Repo
       # -------------------------
       - name: Checkout GitOps Repo
         uses: actions/checkout@v4
         with:
           repository: amolwank/fastapi-gitops
-          token: ${{ secrets.GITOPS_TOKEN }} # Recommended: Use a Personal Access Token or Deploy Key
+          token: ${{ secrets.GITOPS_PAT }} # This uses the secret you just created
           path: gitops-repo
 
       - name: Update Image Tag
         run: |
           cd gitops-repo
-          # Use the env context to ensure the tag is captured correctly
+          
+          # Update the tag in the YAML file
           sed -i "s/tag:.*/tag: \"${{ env.IMAGE_TAG }}\"/" helm/fastapi/values.yaml
           
-          git config --global user.email "ci@github.com"
-          git config --global user.name "github-actions"
+          # Standard Git identity config
+          git config user.email "ci@github.com"
+          git config user.name "github-actions"
           
           git add helm/fastapi/values.yaml
           
-          # Only commit and push if there are actual changes
+          # Only commit if something actually changed to avoid errors
           if git diff --staged --quiet; then
-            echo "No changes to image tag. Skipping push."
+            echo "No changes detected."
           else
             git commit -m "Deploy FastAPI ${{ env.IMAGE_TAG }}"
             git push origin main
