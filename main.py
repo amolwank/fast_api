@@ -4,8 +4,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 app = FastAPI()
 Instrumentator().instrument(app).expose(app)
 
-app = FastAPI()
-
 @app.get("/")
 def home():
     return {"message": "FastApi is Walking and Running."}
