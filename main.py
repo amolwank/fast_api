@@ -8,9 +8,9 @@ Instrumentator().instrument(app).expose(app)
 def home():
     return {"message": "FastApi is Walking and Running."}
 
-@app.get("/health")
-def health():
-    return {"message":"OK"}
+@app.get("/healthz")
+async def health_check():
+    return {"status": "ok"}
 
 @app.get("/hello/{name}")
 def say_hello(name:str):
