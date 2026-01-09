@@ -6,7 +6,7 @@ Instrumentator().instrument(app).expose(app)
 
 @app.get("/")
 def home():
-    return {"message": "FastApi is Walking and Running."}
+    return {"message": "FastApi is Walking and Running and Fking."}
 
 @app.get("/healthz")
 async def health_check():
